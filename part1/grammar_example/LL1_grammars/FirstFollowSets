@@ -1,0 +1,28 @@
+FIRST sets
+-----------------------------
+FIRST(#1) = {'0'..'9'}
+
+FIRST(#2) = {'?'}
+
+FIRST(#3) = {e}
+
+
+
+
+FOLLOW sets
+-----------------------------
+FOLLOW(Tern) = {':', $}
+
+FOLLOW(TernTail) = FOLLOW(Tern) = {':', $}
+
+
+
+
+FIRST+ sets
+-----------------------------
+FIRST+(#1) = FIRST(#1) = {'0'..'9'}
+
+FIRST+(#2) = FIRST(#2) = {'?'}
+
+// FIRST(#3) contains e
+FIRST+(#3) = FIRST(#3) U FOLLOW(TernTail) \ {e} = {':', $}

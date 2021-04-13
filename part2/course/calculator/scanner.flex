@@ -71,13 +71,13 @@ dec_int_lit = 0 | [1-9][0-9]*
 
 <YYINITIAL> {
 /* operators */
- "+"            { return symbol(sym.PLUS); }
- "-"            { return symbol(sym.MINUS); }
- "**"           { return symbol(sym.EXP); }
- "("            { return symbol(sym.LPAREN); }
- ")"            { return symbol(sym.RPAREN); }
- ";"            { return symbol(sym.SEMI); }
- {dec_int_lit}  { return symbol(sym.NUMBER, new Integer(yytext())); }
+ "+"            { System.out.println("+");return symbol(sym.PLUS); }
+ "-"            { System.out.println("-");return symbol(sym.MINUS); }
+ "**"           { System.out.println("**");return symbol(sym.EXP); }
+ "("            { System.out.println("(");return symbol(sym.LPAREN); }
+ ")"            { System.out.println(")");return symbol(sym.RPAREN); }
+ ";"            { System.out.println(";");return symbol(sym.SEMI); }
+ {dec_int_lit}  { System.out.println("num");return symbol(sym.NUMBER, new Integer(yytext())); }
  \"             { stringBuffer.setLength(0); yybegin(STRING); }
  {WhiteSpace}   { /* just skip what was found, do nothing */ }
 }
