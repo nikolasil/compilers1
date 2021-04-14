@@ -1,5 +1,6 @@
 import java.io.InputStream;
 import java.io.IOException;
+import java.lang.Math;
 /*
 * -------------------------------------------------------------------------
 * 	        |     '0' .. '9'     |  ':'    |       '?'          |  $    |
@@ -13,7 +14,6 @@ import java.io.IOException;
 * 	        |	  	             |	       |    	     	    |       |
 * -------------------------------------------------------------------------
 */
-
 
 class TernaryEvaluator {
     private final InputStream in;
@@ -41,7 +41,7 @@ class TernaryEvaluator {
     }
 
     public int eval() throws IOException, ParseError {
-        int value = Tern();
+        int value = goal();
 
         if (lookahead != -1 && lookahead != '\n')
             throw new ParseError();
@@ -49,32 +49,98 @@ class TernaryEvaluator {
         return value;
     }
 
-    private int Tern() throws IOException, ParseError {
+    private int goal() throws IOException, ParseError {
         if (isDigit(lookahead)) {
-            int cond = evalDigit(lookahead);
+            return exp(term());
+        }
 
-            consume(lookahead);
-            return TernTail(cond); 
+        if (lookahead == '(') {
+            return exp(term());
         }
 
         throw new ParseError();
     }
 
-    private int TernTail(int condition) throws IOException, ParseError {
+    private int exp(int condition) throws IOException, ParseError {
         switch (lookahead) {
-            case '?':
-                consume('?');
-                int left = Tern();
-                consume(':');
-                int right = Tern();
-
-                return condition != 0 ? left : right;
-            case -1:
-            case '\n':
-            case ':':
-                return condition;
+        case '+':
+            consume('+');
+            int a = term();
+            return exp(condition + a);
+        case '-':
+            consume('-');
+            return exp(condition - term());
+        case ')':
+            return condition;
+        case -1:
+            return condition;
+        case '\n':
+            return condition;
         }
 
         throw new ParseError();
+    }
+
+    private int term() throws IOException, ParseError {
+        if (isDigit(lookahead)) {
+            return termTail(number());
+        }
+        if (lookahead == '(') {
+            return termTail(number());
+        }
+
+        throw new ParseError();
+    }
+
+    private int termTail(int condition) throws IOException, ParseError {
+        switch (lookahead) {
+        case '*':
+            consume('*');
+            if (lookahead == '*') {
+                consume('*');
+
+                return termTail((int) Math.pow(condition, number()));
+            }
+        case '+':
+            return condition;
+        case '-':
+            return condition;
+        case ')':
+            return condition;
+        case -1:
+            return condition;
+        case '\n':
+            return condition;
+        }
+        throw new ParseError();
+    }
+
+    private int number() throws IOException, ParseError {
+        if (isDigit(lookahead)) {
+            int num1 = evalDigit(lookahead);
+            consume(lookahead);
+            int num2 = numTail();
+            if (num2 != -1)
+                num1 = Integer.parseInt(Integer.toString(num1) + Integer.toString(num2));
+            return num1;
+        }
+
+        if (lookahead == '(') {
+            consume('(');
+            int result = exp(term());
+            consume(')');
+
+            return result;
+        }
+
+        throw new ParseError();
+    }
+
+    private int numTail() throws IOException, ParseError {
+        if (isDigit(lookahead)) {
+            return number();
+        }
+
+        return -1;
     }
 }

@@ -1,0 +1,69 @@
+goal -> term exp
+exp -> '+' term exp
+      | '-' term exp
+      | e 
+term -> number termTail
+termTail -> '*' '*' number termTail
+       | e
+number -> digit numTail
+        | '(' term exp ')'
+numTail -> number
+        | e
+digit -> '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9'
+
+FIRST(1) = '0'..'9' '('
+
+FIRST(2) = +
+FIRST(3) = -
+FIRST(4) = e
+FIRST(5) = '0'..'9' '('
+FIRST(6) = **
+FIRST(7) = e
+FIRST(8) = '0'..'9'
+FIRST(9) = (
+FIRST(10) = '0'..'9'
+FIRST(11) = e
+FIRST(12) = '0'..'9'
+
+FOLLOW(goal) = $
+FOLLOW(exp) = ')' $
+FOLLOW(term) = FIRST(exp) FOLLOW(exp) = + - ) e
+FOLLOW(termTail) = + - ) e
+FOLLOW(number) = ** e
+FOLLOW(numTail) = ** e
+FOLLOW(digit) = '0'..'9' e
+
+FIRST+(1) = '0'..'9' '('
+
+FIRST+(2) = +
+FIRST+(3) = -
+FIRST+(4) = ')' $
+
+FIRST+(5) = '0'..'9' '('
+
+FIRST+(6) = **
+FIRST+(7) = + - )
+
+FIRST+(8) = '0'..'9'
+FIRST+(9) = (
+
+FIRST+(10) = '0'..'9'
+FIRST+(11) = **
+
+FIRST+(12) = '0'..'9'
+
+                 +               -              **              (               )         '0'..'9'          $ 
+
+goal           error          error           error        term exp           error      term exp     error
+
+exp         + term exp    - term exp         error           error           e      error            e 
+
+term            error           error           error        number termTail           error     number termTail      error
+
+termTail           e               e           ** number termTail     error           e      error            error
+
+number          error           error           error       '(' term exp ')'  error    digit numTail      error
+
+numTail         error           error           e               error           error      number           error
+
+digit           error           error           e               error           error      0123456789       error
