@@ -65,8 +65,7 @@ class TernaryEvaluator {
         switch (lookahead) {
         case '+':
             consume('+');
-            int a = term();
-            return exp(condition + a);
+            return exp(condition + term());
         case '-':
             consume('-');
             return exp(condition - term());
@@ -85,6 +84,7 @@ class TernaryEvaluator {
         if (isDigit(lookahead)) {
             return termTail(number());
         }
+
         if (lookahead == '(') {
             return termTail(number());
         }
@@ -98,7 +98,6 @@ class TernaryEvaluator {
             consume('*');
             if (lookahead == '*') {
                 consume('*');
-
                 return termTail((int) Math.pow(condition, number()));
             }
         case '+':
