@@ -64,6 +64,6 @@ termTail           e               e           ** number termTail     error     
 
 number          error           error           error       '(' term exp ')'  error    digit numTail      error
 
-numTail         error           error           e               error           error      number           error
+numTail         error           error           e               number           error      number           error
 
 digit           error           error           e               error           error      0123456789       error

@@ -1,23 +1,10 @@
 import java.io.InputStream;
 import java.io.IOException;
 import java.lang.Math;
-/*
-* -------------------------------------------------------------------------
-* 	        |     '0' .. '9'     |  ':'    |       '?'          |  $    |
-* -------------------------------------------------------------------------
-* 	        |		             |	       |	                |       |
-* Tern      | '0'..'9' TernTail  |  error  |       error        | error |
-*           | 	   	             |	       |    	            |       |
-* -------------------------------------------------------------------------
-*           |		             |	       |		            |       |
-* TernTail  |       error	     |    e    |  '?' Tern ':' Tern |   e   |
-* 	        |	  	             |	       |    	     	    |       |
-* -------------------------------------------------------------------------
-*/
 
 class TernaryEvaluator {
     private final InputStream in;
-
+    int count = -1;
     private int lookahead;
 
     public TernaryEvaluator(InputStream in) throws IOException {
@@ -26,31 +13,24 @@ class TernaryEvaluator {
     }
 
     private void consume(int symbol) throws IOException, ParseError {
-        if (lookahead == symbol)
+        if (lookahead == symbol) {
             lookahead = in.read();
-        else
-            throw new ParseError();
-    }
-
-    private boolean isDigit(int c) {
-        return '0' <= c && c <= '9';
-    }
-
-    private int evalDigit(int c) {
-        return c - '0';
+            count++;
+        } else
+            throw new ParseError(count, "In consume(): lookahead=" + (char) lookahead + " symbol=" + (char) symbol);
     }
 
     public int eval() throws IOException, ParseError {
         int value = goal();
 
         if (lookahead != -1 && lookahead != '\n')
-            throw new ParseError();
+            throw new ParseError(count, "In eval(): lookahead=" + (char) lookahead);
 
         return value;
     }
 
     private int goal() throws IOException, ParseError {
-        if (isDigit(lookahead)) {
+        if ('0' <= lookahead && lookahead <= '9') {
             return exp(term());
         }
 
@@ -58,30 +38,30 @@ class TernaryEvaluator {
             return exp(term());
         }
 
-        throw new ParseError();
+        throw new ParseError(count, "In goal(): lookahead=" + (char) lookahead);
     }
 
-    private int exp(int condition) throws IOException, ParseError {
+    private int exp(int left_num) throws IOException, ParseError {
         switch (lookahead) {
         case '+':
             consume('+');
-            return exp(condition + term());
+            return exp(left_num + term());
         case '-':
             consume('-');
-            return exp(condition - term());
+            return exp(left_num - term());
         case ')':
-            return condition;
+            return left_num;
         case -1:
-            return condition;
+            return left_num;
         case '\n':
-            return condition;
+            return left_num;
         }
 
-        throw new ParseError();
+        throw new ParseError(count, "In exp(): lookahead=" + (char) lookahead + " left_num=" + left_num);
     }
 
     private int term() throws IOException, ParseError {
-        if (isDigit(lookahead)) {
+        if ('0' <= lookahead && lookahead <= '9') {
             return termTail(Integer.parseInt(number()));
         }
 
@@ -89,39 +69,37 @@ class TernaryEvaluator {
             return termTail(Integer.parseInt(number()));
         }
 
-        throw new ParseError();
+        throw new ParseError(count, "In term() lookahead=" + (char) lookahead);
     }
 
-    private int termTail(int condition) throws IOException, ParseError {
+    private int termTail(int base) throws IOException, ParseError {
         switch (lookahead) {
         case '*':
             consume('*');
             if (lookahead == '*') {
                 consume('*');
-                return termTail((int) Math.pow(condition, Integer.parseInt(number())));
+                return termTail((int) Math.pow(base, Integer.parseInt(number())));
             }
         case '+':
-            return condition;
+            return base;
         case '-':
-            return condition;
+            return base;
         case ')':
-            return condition;
+            return base;
         case -1:
-            return condition;
+            return base;
         case '\n':
-            return condition;
+            return base;
         }
-        throw new ParseError();
+
+        throw new ParseError(count, "In termTail() lookahead=" + (char) lookahead + " base=" + base);
     }
 
     private String number() throws IOException, ParseError {
-        if (isDigit(lookahead)) {
-            String num1 = Integer.toString(evalDigit(lookahead));
+        if ('0' <= lookahead && lookahead <= '9') {
+            String num1 = Integer.toString(digit(lookahead));
             consume(lookahead);
-            String num2 = numTail();
-            if (num2 != "")
-                num1 = num1 + num2;
-            return num1;
+            return num1 + numTail();
         }
 
         if (lookahead == '(') {
@@ -132,17 +110,35 @@ class TernaryEvaluator {
             return Integer.toString(result);
         }
 
-        throw new ParseError();
+        throw new ParseError(count, "In number() lookahead=" + (char) lookahead);
     }
 
     private String numTail() throws IOException, ParseError {
-        if (isDigit(lookahead)) {
+        if ('0' <= lookahead && lookahead <= '9') {
             return number();
         }
-
-        if (lookahead == '(')
+        switch (lookahead) {
+        case '(':
             return number();
+        case '*':
+            return "";
+        case '+':
+            return "";
+        case '-':
+            return "";
+        case ')':
+            return "";
+        case -1:
+            return "";
+        case '\n':
+            return "";
+        }
+        throw new ParseError(count, "In numTail() lookahead=" + (char) lookahead);
+    }
 
-        return "";
+    private int digit(int num) throws IOException, ParseError {
+        if ('0' <= num && num <= '9')
+            return num - '0';
+        throw new ParseError(count, "In digit() lookahead=" + (char) lookahead + " num=" + (char) num);
     }
 }
