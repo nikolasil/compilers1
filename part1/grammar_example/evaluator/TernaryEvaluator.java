@@ -82,11 +82,11 @@ class TernaryEvaluator {
 
     private int term() throws IOException, ParseError {
         if (isDigit(lookahead)) {
-            return termTail(number());
+            return termTail(Integer.parseInt(number()));
         }
 
         if (lookahead == '(') {
-            return termTail(number());
+            return termTail(Integer.parseInt(number()));
         }
 
         throw new ParseError();
@@ -98,7 +98,7 @@ class TernaryEvaluator {
             consume('*');
             if (lookahead == '*') {
                 consume('*');
-                return termTail((int) Math.pow(condition, number()));
+                return termTail((int) Math.pow(condition, Integer.parseInt(number())));
             }
         case '+':
             return condition;
@@ -114,13 +114,13 @@ class TernaryEvaluator {
         throw new ParseError();
     }
 
-    private int number() throws IOException, ParseError {
+    private String number() throws IOException, ParseError {
         if (isDigit(lookahead)) {
-            int num1 = evalDigit(lookahead);
+            String num1 = Integer.toString(evalDigit(lookahead));
             consume(lookahead);
-            int num2 = numTail();
-            if (num2 != -1)
-                num1 = Integer.parseInt(Integer.toString(num1) + Integer.toString(num2));
+            String num2 = numTail();
+            if (num2 != "")
+                num1 = num1 + num2;
             return num1;
         }
 
@@ -129,17 +129,20 @@ class TernaryEvaluator {
             int result = exp(term());
             consume(')');
 
-            return result;
+            return Integer.toString(result);
         }
 
         throw new ParseError();
     }
 
-    private int numTail() throws IOException, ParseError {
+    private String numTail() throws IOException, ParseError {
         if (isDigit(lookahead)) {
             return number();
         }
 
-        return -1;
+        if (lookahead == '(')
+            return number();
+
+        return "";
     }
 }
