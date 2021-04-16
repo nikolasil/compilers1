@@ -1,0 +1,185 @@
+/* Simple +/-/* StringOrCallFunctionession language; parser evaluates constant StringOrCallFunctionessions on the fly*/
+/**
+ *  Package and Import Specifications
+ */
+import java_cup.runtime.*;
+import java.io.*;
+
+/**
+ *  Usercode Components
+ */
+parser code {:
+    // Connect this parser to a scanner!
+    Scanner s;
+    Parser(Scanner s){ this.s=s; }
+:}
+
+/* define how to connect to the scanner! */
+scan with {: return s.next_token(); :};
+
+/**
+ *  Symbol Lists
+ */
+
+/* Terminals (tokens returned by the scanner). */
+terminal           PLUS, LPAREN, RPAREN, LBRAC, RBRAC, PREFIX, SUFFIX, COMMA, VARIABLE, FUNCTION, IF, ELSE;
+terminal String     STRING_LITERAL;
+
+/*  Non terminals */
+non terminal            program;
+non terminal String    definitions,defArgs,callArgsInsideBrackets,callArgsTailInsideBrackets,StringOrCallFunctionOrVariableInsideBrackets,defArgsTail,calls,otherCalls,callArgs,callArgsTail,StringOrCallFunction,bracketsExpr,brackets,prefixOrSuffix,chooseIf,plusTail;
+
+/**
+ *  Precedence Declarations
+precedence left PLUS, MINUS;
+precedence right EXP;
+ */
+
+/**
+ *  The Grammar Rules
+ */
+
+program ::= definitions:defs {:
+        File file = new File("./output.java");
+        if(file.createNewFile()) {
+            System.out.println("Created New file: " + file.getName());
+        }
+        else {
+            System.out.println("Output file already exists with name : " + file.getName());
+        }
+        FileWriter writer = new FileWriter(file.getName());
+        writer.write("import java.lang.Math;\n");
+        writer.write("public class output {");
+        // writer.write(calls);
+        writer.write(defs);
+        writer.write("}");
+        writer.close();
+			 :}
+	;
+
+definitions ::= FUNCTION:func defArgs:args LBRAC brackets:body RBRAC definitions:other {: RESULT = String.format("\n\tpublic static String %s%s) {\n\t\t%s\n\t}\n%s",func,args,body,other); :}
+            |   calls:call {: RESULT = String.format("%s",call); :}
+            ;
+
+calls ::= FUNCTION:func callArgs:args otherCalls:others {: RESULT = String.format("\n\tpublic static void main(String[] args) {\n\t\tSystem.out.println(%s%s));%s\n\t}\n",func,args,others); :}
+        ;
+
+otherCalls  ::= FUNCTION:func callArgs:args otherCalls:others {: RESULT = String.format("\n\t\tSystem.out.println(%s%s));%s",func,args,others); :}
+            |   {: RESULT = String.format(""); :}
+            ;
+
+defArgs ::= VARIABLE:id defArgsTail:tail {: RESULT = String.format("String %s%s",id,tail); :}
+        | RPAREN {: RESULT = String.format(""); :}
+        ;
+
+defArgsTail ::= COMMA VARIABLE:id1 defArgsTail:args {: RESULT = String.format(", String %s%s",id1,args); :}
+            | RPAREN {: RESULT = String.format(""); :}
+            ;
+
+callArgs ::= StringOrCallFunction:e callArgsTail:tail {: RESULT = String.format("%s%s",e,tail); :}
+         | RPAREN {: RESULT = String.format(""); :}
+         ;
+
+callArgsTail ::= COMMA StringOrCallFunction:e callArgsTail:tail {: RESULT = String.format(", %s%s",e,tail); :}
+             | RPAREN {: RESULT = String.format(""); :}
+             ;
+
+StringOrCallFunction ::=    STRING_LITERAL:str {: RESULT = String.format("\"%s\"",str); :}
+                    |       FUNCTION:func callArgs:str {: RESULT = String.format("%s%s)",func,str); :}
+                    ;
+
+
+brackets    ::= bracketsExpr:e plusTail:tail {: RESULT = String.format("\treturn %s %s;",e,tail); :}
+            |   IF chooseIf:res1 RPAREN brackets:ans1 ELSE brackets:ans2 {: RESULT = String.format("if(%s)\n\t\t\t%s\n\t\telse\n\t\t\t%s",res1,ans1,ans2); :}
+            ;
+
+plusTail    ::= PLUS bracketsExpr:e plusTail:tail {: RESULT = String.format("+ %s %s",e,tail); :}
+            |   {: RESULT = String.format(""); :}
+            ;
+
+chooseIf    ::= bracketsExpr:e1 prefixOrSuffix:op bracketsExpr:e2 {:
+                if(op.equals("prefix")){
+                    RESULT = String.format("%s.startsWith(%s)",e1,e2);
+                }
+                else{
+                    RESULT = String.format("%s.endsWith(%s)",e1,e2);
+                } :}
+            |   brackets:res {: RESULT = String.format("%s",res); :}
+            ;
+
+prefixOrSuffix ::=  SUFFIX {: RESULT = String.format("suffix"); :}
+                |   PREFIX  {: RESULT = String.format("prefix"); :}
+                ;
+
+bracketsExpr    ::=   STRING_LITERAL:str {: RESULT = String.format("\"%s\"",str); :}
+                |     VARIABLE:v {: RESULT = String.format("%s",v); :}
+                |     FUNCTION:func callArgsInsideBrackets:str {: RESULT = String.format("%s%s)",func,str); :}
+                ;
+
+callArgsInsideBrackets  ::= StringOrCallFunctionOrVariableInsideBrackets:e callArgsTailInsideBrackets:tail {: RESULT = String.format("%s%s",e,tail); :}
+                        |   RPAREN {: RESULT = String.format(""); :}
+                        ;
+
+callArgsTailInsideBrackets ::= COMMA StringOrCallFunctionOrVariableInsideBrackets:e callArgsTailInsideBrackets:tail {: RESULT = String.format(", %s%s",e,tail); :}
+                            | RPAREN {: RESULT = String.format(""); :}
+                            ;
+
+StringOrCallFunctionOrVariableInsideBrackets    ::=         STRING_LITERAL:str {: RESULT = String.format("\"%s\"",str); :}
+                                                |           VARIABLE:v {: RESULT = String.format("%s",v); :}
+                                                |           FUNCTION:func callArgsInsideBrackets:str {: RESULT = String.format("%s%s)",func,str); :}
+                                                ;
+/*
+
+nikol_as(){ if(c prefix "yes") if(check("nik") prefix check("nikolas")) "yeah" + "yeah" else f  else d}
+nikol_as(){kostas(x)}
+kostas("k")
+
+name() {
+    "John"
+}
+
+
+repeat(x) {
+    x + x
+}
+
+findLangType("Java")
+findLangType("Javascript")
+findLangType("Typescript")
+
+
+cond_repeat(c, x) {
+    if(c prefix "yes")
+        if("yes" prefix c)
+            repeat(x)
+        else
+            x
+    else
+        x
+}
+cond_repeat("yes", name())
+cond_repeat("no", "Jane")
+
+
+
+findLangType(langName) {
+    if ("Java" prefix langName)
+        if(langName prefix "Java")
+            "Static"
+        else
+            if("script" suffix langName)
+                "Dynamic"
+            else
+                "Unknown"
+    else
+        if ("script" suffix langName)
+            "Probably Dynamic"
+        else
+            "Unknown"
+}
+
+findLangType("Java")
+findLangType("Javascript")
+findLangType("Typescript")
+
+*/

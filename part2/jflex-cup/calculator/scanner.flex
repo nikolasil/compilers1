@@ -59,10 +59,10 @@ LineTerminator = \r|\n|\r\n
 /* White space is a line terminator, space, tab, or line feed. */
 WhiteSpace     = {LineTerminator} | [ \t\f]
 
-/* A literal integer is is a number beginning with a number between
-   one and nine followed by zero or more numbers between zero and nine
-   or just a zero.  */
-dec_int_lit = 0 | [1-9][0-9]*
+Variable = [a-zA-Z$_][a-zA-Z0-9$_]*
+
+Function = {Variable}{WhiteSpace}*[(]
+
 
 %state STRING
 
@@ -71,13 +71,19 @@ dec_int_lit = 0 | [1-9][0-9]*
 
 <YYINITIAL> {
 /* operators */
- "+"            { System.out.println("+");return symbol(sym.PLUS); }
- "-"            { System.out.println("-");return symbol(sym.MINUS); }
- "**"           { System.out.println("**");return symbol(sym.EXP); }
- "("            { System.out.println("(");return symbol(sym.LPAREN); }
- ")"            { System.out.println(")");return symbol(sym.RPAREN); }
- ";"            { System.out.println(";");return symbol(sym.SEMI); }
- {dec_int_lit}  { System.out.println("num");return symbol(sym.NUMBER, new Integer(yytext())); }
+ "+"            { return symbol(sym.PLUS); }
+ ","            { return symbol(sym.COMMA); }
+ "("            { return symbol(sym.LPAREN); }
+ ")"            { return symbol(sym.RPAREN); }
+ "{"            { return symbol(sym.LBRAC); }
+ "}"            { return symbol(sym.RBRAC); }
+ "prefix"         { return symbol(sym.PREFIX); }
+ "suffix"         { return symbol(sym.SUFFIX); }
+ "if("             { return symbol(sym.IF); }
+ "if ("             { return symbol(sym.IF); }
+ "else"           { return symbol(sym.ELSE); }
+ {Function}   { return symbol(sym.FUNCTION, yytext()); }
+ {Variable}   { return symbol(sym.VARIABLE, yytext()); }
  \"             { stringBuffer.setLength(0); yybegin(STRING); }
  {WhiteSpace}   { /* just skip what was found, do nothing */ }
 }
