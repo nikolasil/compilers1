@@ -3,17 +3,17 @@ public class output {
 	public static String findLangType(String langName) {
 		if("Java".startsWith(langName))
 			if(langName.startsWith("Java"))
-				return "Static" ;
+				return "Static";
 		else
 			if("script".endsWith(langName))
-				return "Dynamic" ;
+				return "Dynamic"+"kostas";
 		else
-				return "Unknown" ;
+				return "Unknown"+"kostas"+"kostas"+"kostas";
 		else
 			if("script".endsWith(langName))
-				return "Probably Dynamic" ;
+				return "Probably Dynamic";
 		else
-				return "Unknown" ;
+				return "Unknown";
 	}
 
 	public static void main(String[] args) {

@@ -455,7 +455,7 @@ class CUP$Parser$actions {
 		int tailleft = ((java_cup.runtime.Symbol)CUP$Parser$stack.peek()).left;
 		int tailright = ((java_cup.runtime.Symbol)CUP$Parser$stack.peek()).right;
 		String tail = (String)((java_cup.runtime.Symbol) CUP$Parser$stack.peek()).value;
-		 RESULT = String.format("\treturn %s %s;",e,tail); 
+		 RESULT = String.format("\treturn %s%s;",e,tail); 
               CUP$Parser$result = parser.getSymbolFactory().newSymbol("brackets",13, ((java_cup.runtime.Symbol)CUP$Parser$stack.elementAt(CUP$Parser$top-1)), ((java_cup.runtime.Symbol)CUP$Parser$stack.peek()), RESULT);
             }
           return CUP$Parser$result;
@@ -488,7 +488,7 @@ class CUP$Parser$actions {
 		int tailleft = ((java_cup.runtime.Symbol)CUP$Parser$stack.peek()).left;
 		int tailright = ((java_cup.runtime.Symbol)CUP$Parser$stack.peek()).right;
 		String tail = (String)((java_cup.runtime.Symbol) CUP$Parser$stack.peek()).value;
-		 RESULT = String.format("+ %s %s",e,tail); 
+		 RESULT = String.format("+%s%s",e,tail); 
               CUP$Parser$result = parser.getSymbolFactory().newSymbol("plusTail",16, ((java_cup.runtime.Symbol)CUP$Parser$stack.elementAt(CUP$Parser$top-2)), ((java_cup.runtime.Symbol)CUP$Parser$stack.peek()), RESULT);
             }
           return CUP$Parser$result;
