@@ -26,16 +26,17 @@ digit -> '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9'
 */
 
 class CalculatorParser {
-    private final InputStream in;   // the input stream
-    private int lookahead;          // the next symbol
-    private int count = -1;         // every time we consume we count++ to print the exact position that the error occurs
+    private final InputStream in; // the input stream
+    private int lookahead; // the next symbol
+    private int count = -1; // every time we consume we count++ to print the exact position that the error
+                            // occurs
 
     private static final int PLUS = '+';
     private static final int MINUS = '-';
     private static final int STAR = '*';
     private static final int LPAREN = '(';
     private static final int RPAREN = ')';
-    
+
     private static final int BACKSLASH_N = '\n';
     private static final int LOOKAHEAD_END = -1;
     private static final int ZERO = '0';
@@ -52,13 +53,15 @@ class CalculatorParser {
             this.lookahead = in.read();
             this.count++; // +1 to count to know where the error occurs
         } else
-            throw new ParseError(this.count, "In consume(): lookahead=" + (char) this.lookahead + " symbol=" + (char) symbol);
+            throw new ParseError(this.count,
+                    "In consume(): lookahead=" + (char) this.lookahead + " symbol=" + (char) symbol);
     }
 
     public int parse() throws IOException, ParseError {
         int value = goal();
 
-        if (this.lookahead != LOOKAHEAD_END && this.lookahead != BACKSLASH_N) // if we end the reccursion and the lookahead is not at the end throw error
+        if (this.lookahead != LOOKAHEAD_END && this.lookahead != BACKSLASH_N) // if we end the reccursion and the
+                                                                              // lookahead is not at the end throw error
             throw new ParseError(this.count, "In eval(): lookahead=" + (char) this.lookahead);
 
         return value;
@@ -129,7 +132,7 @@ class CalculatorParser {
             consume(STAR);
             if (this.lookahead == STAR) {
                 consume(STAR);
-                return termTail((int) Math.pow(base, Integer.parseInt(number()))); // termTail -> '**' number termTail 
+                return termTail((int) Math.pow(base, Integer.parseInt(number()))); // termTail -> '**' number termTail
             }
         case PLUS:
             return base; // termTail -> e
@@ -186,19 +189,19 @@ class CalculatorParser {
         }
         switch (this.lookahead) {
         case LPAREN:
-            return number();  // numTail -> number
+            return number(); // numTail -> number
         case STAR:
-            return EMPTY_STRING;  // numTail -> e
+            return EMPTY_STRING; // numTail -> e
         case PLUS:
-            return EMPTY_STRING;  // numTail -> e
+            return EMPTY_STRING; // numTail -> e
         case MINUS:
-            return EMPTY_STRING;  // numTail -> e
+            return EMPTY_STRING; // numTail -> e
         case RPAREN:
-            return EMPTY_STRING;  // numTail -> e
+            return EMPTY_STRING; // numTail -> e
         case LOOKAHEAD_END:
-            return EMPTY_STRING;  // numTail -> e
+            return EMPTY_STRING; // numTail -> e
         case BACKSLASH_N:
-            return EMPTY_STRING;  // numTail -> e
+            return EMPTY_STRING; // numTail -> e
         }
         throw new ParseError(this.count, "In numTail() lookahead=" + (char) this.lookahead);
     }
