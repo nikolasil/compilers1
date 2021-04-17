@@ -52,15 +52,11 @@ import java_cup.runtime.*;
   in the Lexical Rules Section.
 */
 
-/* A line terminator is a \r (carriage return), \n (line feed), or
-   \r\n.*/
 LineTerminator = \r|\n|\r\n
-
-/* White space is a line terminator, space, tab, or line feed. */
 WhiteSpace     = {LineTerminator} | [ \t\f]
 
+If = (if){WhiteSpace}*[(]
 Variable = [a-zA-Z$_][a-zA-Z0-9$_]*
-
 Function = {Variable}{WhiteSpace}*[(]
 
 
@@ -79,8 +75,7 @@ Function = {Variable}{WhiteSpace}*[(]
  "}"            { return symbol(sym.RBRAC); }
  "prefix"         { return symbol(sym.PREFIX); }
  "suffix"         { return symbol(sym.SUFFIX); }
- "if("             { return symbol(sym.IF); }
- "if ("             { return symbol(sym.IF); }
+ {If}             { return symbol(sym.IF); }
  "else"           { return symbol(sym.ELSE); }
  {Function}   { return symbol(sym.FUNCTION, yytext()); }
  {Variable}   { return symbol(sym.VARIABLE, yytext()); }

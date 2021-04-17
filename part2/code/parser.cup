@@ -132,7 +132,7 @@ StringOrCallFunctionOrVariableInsideBrackets    ::=         STRING_LITERAL:str {
 /*
 
 findLangType(langName) {
-    if ("Java" prefix langName)
+    if          ("Java" prefix langName)
         if(langName prefix "Java")
             "Static"
         else
