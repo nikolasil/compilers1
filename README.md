@@ -39,3 +39,35 @@ In order to have multidigit number i use the logic of the numTail.
 I made number type of String in my code and the single digits are beeing concatenated with each other and in the end the number is a long String that is beeing parsed into an Integer to make the +, - and ** operations.
 
 ### Part2
+
+Use the command **make** to clean, compile, execute the parser and at the end the output Java code will execute.
+
+I have made in the jflex those macros.
+
+- If = (if){WhiteSpace}*[(]
+> finds an if with any space beetween that ends with (
+- Variable = [a-zA-Z][a-zA-Z0-9]*
+> finds a variable
+- Function = {Variable}{WhiteSpace}*[(]
+> finds a variable with any space beetween that ends (
+
+In the cup all the functions declarations must be before any calls.
+
+#### **Arguments**
+
+I have separate the cases where the arguments of an function are valid.
+- for the arguments in the declarations of a function can be **only variables**.
+- inside a functions body there can be **variables**, **Strings**, **function call** and an **IF** as arguments of an function call.
+- functions calls in the main can have as arguments **Strings**, **function call** and **IF**.
+
+#### **IF**
+
+- An **IF** can have as operator only a **prefix** or a **suffix**.
+- Inside an **IF** can be another **IF**.
+
+#### **Prefix Suffix**
+
+- a prefix b == b.startsWith(a)
+- a suffix b == b.endsWith(a)
+
+- left or right from prefix or suffix can be everything that is a string.

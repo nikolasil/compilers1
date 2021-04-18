@@ -22,12 +22,12 @@ scan with {: return s.next_token(); :};
  */
 
 /* Terminals (tokens returned by the scanner). */
-terminal           PLUS, LPAREN, RPAREN, LBRAC, RBRAC, PREFIX, SUFFIX, COMMA, VARIABLE, FUNCTION, IF, ELSE;
+terminal           PLUS, LPAREN, RPAREN, LBRAC, RBRAC, PREFIX, SUFFIX, COMMA, VARIABLE, FUNCTION, IF, WRONGIF, ELSE, WHITESPACE;
 terminal String     STRING_LITERAL;
 
 /*  Non terminals */
 non terminal            program;
-non terminal String    definitions,defArgs,callArgsInsideBrackets,callArgsTailInsideBrackets,StringOrCallFunctionOrVariableInsideBrackets,defArgsTail,calls,otherCalls,callArgs,callArgsTail,StringOrCallFunction,bracketsExpr,brackets,prefixOrSuffix,chooseIf,plusTail;
+non terminal String    declarations,defArgs,BracketsConcInIf,callConcInIf,callArgsInsideBrackets,exprInCall,argumentsInCallPlusTail,callArgsTailInsideBrackets,chooseIfCalls,argumentsInCall,StringOrCallFunctionOrVariableInsideBrackets,defArgsTail,calls,otherCalls,callArgs,callArgsTail,bracketsExpr,brackets,prefixOrSuffix,chooseIf,plusTail;
 
 /**
  *  Precedence Declarations
@@ -39,7 +39,7 @@ precedence right EXP;
  *  The Grammar Rules
  */
 
-program ::= definitions:defs {:
+program ::= declarations:defs {:
         File file = new File("./output.java");
         if(file.createNewFile()) {
             System.out.println("Created New file: " + file.getName());
@@ -50,22 +50,16 @@ program ::= definitions:defs {:
         FileWriter writer = new FileWriter(file.getName());
         writer.write("import java.lang.Math;\n");
         writer.write("public class output {");
-        // writer.write(calls);
         writer.write(defs);
         writer.write("}");
         writer.close();
 			 :}
 	;
 
-definitions ::= FUNCTION:func defArgs:args LBRAC brackets:body RBRAC definitions:other {: RESULT = String.format("\n\tpublic static String %s%s) {\n\t\t%s\n\t}\n%s",func,args,body,other); :}
+// -- Declarations --
+declarations ::= FUNCTION:func defArgs:args LBRAC brackets:body RBRAC declarations:other {: RESULT = String.format("\n\tpublic static String %s%s) {\n\t\t%s\n\t}\n%s",func,args,body,other); :}
             |   calls:call {: RESULT = String.format("%s",call); :}
-            ;
-
-calls ::= FUNCTION:func callArgs:args otherCalls:others {: RESULT = String.format("\n\tpublic static void main(String[] args) {\n\t\tSystem.out.println(%s%s));%s\n\t}\n",func,args,others); :}
-        ;
-
-otherCalls  ::= FUNCTION:func callArgs:args otherCalls:others {: RESULT = String.format("\n\t\tSystem.out.println(%s%s));%s",func,args,others); :}
-            |   {: RESULT = String.format(""); :}
+            |    {: RESULT = String.format("public static void main(String[] args){}"); :}
             ;
 
 defArgs ::= VARIABLE:id defArgsTail:tail {: RESULT = String.format("String %s%s",id,tail); :}
@@ -76,36 +70,68 @@ defArgsTail ::= COMMA VARIABLE:id1 defArgsTail:args {: RESULT = String.format(",
             | RPAREN {: RESULT = String.format(""); :}
             ;
 
-callArgs ::= StringOrCallFunction:e callArgsTail:tail {: RESULT = String.format("%s%s",e,tail); :}
+// -- Calls --
+
+calls   ::= argumentsInCall:all otherCalls:others {: RESULT = String.format("\n\tpublic static void main(String[] args) {\n\t\tSystem.out.println(%s);%s\n\t}\n",all,others); :}
+        ;
+
+otherCalls  ::= argumentsInCall:all otherCalls:others {: RESULT = String.format("\n\t\tSystem.out.println(%s);%s",all,others); :}
+            |   {: RESULT = String.format(""); :}
+            ;
+
+callArgs ::= argumentsInCall:e callArgsTail:tail {: RESULT = String.format("%s%s",e,tail); :}
          | RPAREN {: RESULT = String.format(""); :}
          ;
 
-callArgsTail ::= COMMA StringOrCallFunction:e callArgsTail:tail {: RESULT = String.format(", %s%s",e,tail); :}
+callArgsTail ::= COMMA argumentsInCall:e callArgsTail:tail {: RESULT = String.format(", %s%s",e,tail); :}
              | RPAREN {: RESULT = String.format(""); :}
              ;
 
-StringOrCallFunction ::=    STRING_LITERAL:str {: RESULT = String.format("\"%s\"",str); :}
-                    |       FUNCTION:func callArgs:str {: RESULT = String.format("%s%s)",func,str); :}
+argumentsInCall ::= exprInCall:expr argumentsInCallPlusTail:tail {: RESULT = String.format("(%s)%s",expr,tail); :}
+                ;
+
+argumentsInCallPlusTail    ::= PLUS exprInCall:e argumentsInCallPlusTail:tail {: RESULT = String.format("+(%s)%s",e,tail); :}
+                            |  {: RESULT = String.format(""); :}
+                            ;
+
+exprInCall ::=  STRING_LITERAL:str  {: RESULT = String.format("\"%s\"",str); :}
+            |   FUNCTION:func callArgs:str {: RESULT = String.format("%s%s)",func,str); :}
+            |   IF chooseIfCalls:res1 RPAREN exprInCall:ans1  callConcInIf:tail1 ELSE exprInCall:ans2   {: RESULT = String.format("(%s?%s%s:%s)",res1,ans1,tail1,ans2); :}
+            ;
+
+callConcInIf    ::= PLUS exprInCall:ans callConcInIf:tail {: RESULT = String.format("+%s%s",ans,tail); :}
+                    | {: RESULT = String.format(""); :}
                     ;
 
 
-brackets    ::= bracketsExpr:e plusTail:tail {: RESULT = String.format("\treturn %s%s;",e,tail); :}
-            |   IF chooseIf:res1 RPAREN brackets:ans1 ELSE brackets:ans2 {: RESULT = String.format("if(%s)\n\t\t\t%s\n\t\telse\n\t\t\t%s",res1,ans1,ans2); :}
-            // |   IF chooseIf:res1 RPAREN brackets:ans1 ELSE brackets:ans2 {: RESULT = String.format("%s?%s:%s",res1,ans1,ans2); :}
+chooseIfCalls ::= argumentsInCall:e1 prefixOrSuffix:op argumentsInCall:e2 {:
+                if(op.equals("prefix")){
+                    RESULT = String.format("(%s).startsWith(%s)",e2,e1);
+                }
+                else{
+                    RESULT = String.format("(%s).endsWith(%s)",e2,e1);
+                } :}
+            |   exprInCall:res {: RESULT = String.format("%s",res); :}
             ;
 
-plusTail    ::= PLUS bracketsExpr:e plusTail:tail {: RESULT = String.format("+%s%s",e,tail); :}
+// -- inside a function body --
+
+brackets    ::= bracketsExpr:e plusTail:str {: RESULT = String.format("return (%s)%s;" ,e,str); :}
+            ;
+
+
+plusTail    ::= PLUS bracketsExpr:e plusTail:tail {: RESULT = String.format("+(%s)%s",e,tail); :}
             |   {: RESULT = String.format(""); :}
             ;
 
 chooseIf    ::= bracketsExpr:e1 prefixOrSuffix:op bracketsExpr:e2 {:
                 if(op.equals("prefix")){
-                    RESULT = String.format("%s.startsWith(%s)",e1,e2);
+                    RESULT = String.format("%s.startsWith(%s)",e2,e1);
                 }
                 else{
-                    RESULT = String.format("%s.endsWith(%s)",e1,e2);
+                    RESULT = String.format("%s.endsWith(%s)",e2,e1);
                 } :}
-            |   brackets:res {: RESULT = String.format("%s",res); :}
+            |   bracketsExpr:res {: RESULT = String.format("%s",res); :}
             ;
 
 prefixOrSuffix ::=  SUFFIX {: RESULT = String.format("suffix"); :}
@@ -115,13 +141,19 @@ prefixOrSuffix ::=  SUFFIX {: RESULT = String.format("suffix"); :}
 bracketsExpr    ::=   STRING_LITERAL:str {: RESULT = String.format("\"%s\"",str); :}
                 |     VARIABLE:v {: RESULT = String.format("%s",v); :}
                 |     FUNCTION:func callArgsInsideBrackets:str {: RESULT = String.format("%s%s)",func,str); :}
+                |     IF chooseIf:res1 RPAREN bracketsExpr:ans1 BracketsConcInIf:tail1 ELSE bracketsExpr:ans2 {: RESULT = String.format("(%s?%s%s:%s)",res1,ans1,tail1,ans2); :}
                 ;
+
+BracketsConcInIf    ::= PLUS bracketsExpr:ans BracketsConcInIf:tail {: RESULT = String.format("+%s%s",ans,tail); :}
+                    | {: RESULT = String.format(""); :}
+                    ;
 
 callArgsInsideBrackets  ::= StringOrCallFunctionOrVariableInsideBrackets:e callArgsTailInsideBrackets:tail {: RESULT = String.format("%s%s",e,tail); :}
                         |   RPAREN {: RESULT = String.format(""); :}
                         ;
 
 callArgsTailInsideBrackets ::= COMMA StringOrCallFunctionOrVariableInsideBrackets:e callArgsTailInsideBrackets:tail {: RESULT = String.format(", %s%s",e,tail); :}
+                            | PLUS StringOrCallFunctionOrVariableInsideBrackets:e callArgsTailInsideBrackets:tail {: RESULT = String.format("+ %s%s",e,tail); :}
                             | RPAREN {: RESULT = String.format(""); :}
                             ;
 
@@ -129,26 +161,3 @@ StringOrCallFunctionOrVariableInsideBrackets    ::=         STRING_LITERAL:str {
                                                 |           VARIABLE:v {: RESULT = String.format("%s",v); :}
                                                 |           FUNCTION:func callArgsInsideBrackets:str {: RESULT = String.format("%s%s)",func,str); :}
                                                 ;
-/*
-
-findLangType(langName) {
-    if          ("Java" prefix langName)
-        if(langName prefix "Java")
-            "Static"
-        else
-            if("script" suffix langName)
-                "Dynamic" + "kostas"
-            else
-                "Unknown" + "kostas" + "kostas" + "kostas"
-    else
-        if ("script" suffix langName)
-            "Probably Dynamic"
-        else
-            "Unknown"
-}
-
-findLangType("Java")
-findLangType("Javascript")
-findLangType("Typescript")
-
-*/

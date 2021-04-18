@@ -76,11 +76,12 @@ Function = {Variable}{WhiteSpace}*[(]
  "prefix"         { return symbol(sym.PREFIX); }
  "suffix"         { return symbol(sym.SUFFIX); }
  {If}             { return symbol(sym.IF); }
+ "if"             { return symbol(sym.WRONGIF); }
  "else"           { return symbol(sym.ELSE); }
  {Function}   { return symbol(sym.FUNCTION, yytext()); }
  {Variable}   { return symbol(sym.VARIABLE, yytext()); }
  \"             { stringBuffer.setLength(0); yybegin(STRING); }
- {WhiteSpace}   { /* just skip what was found, do nothing */ }
+ {WhiteSpace}   { }
 }
 
 <STRING> {
